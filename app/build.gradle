@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.imurluck.rdi'
-    compileSdk 33
+    compileSdk androidVersions.compileSdk
 
     defaultConfig {
         applicationId "com.imurluck.rdi"
-        minSdk 21
-        targetSdk 33
+        minSdk androidVersions.minSdk
+        targetSdk androidVersions.targetSdk
         versionCode 1
         versionName "1.0"
 
