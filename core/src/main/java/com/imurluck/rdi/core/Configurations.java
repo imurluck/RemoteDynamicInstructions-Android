@@ -7,12 +7,15 @@ import androidx.annotation.NonNull;
 import java.io.File;
 
 /**
- * @author imurluck
+ * @author zhangzongxiang
  */
 public class Configurations {
 
    private static final String ROOT_DIR_NAME = "rdi";
 
+   /**
+    * root dir: /data/data/package/files/rdi
+    */
    @NonNull
    public static File getRootDir(@NonNull Application application) {
       return new File(application.getFilesDir(), ROOT_DIR_NAME);
