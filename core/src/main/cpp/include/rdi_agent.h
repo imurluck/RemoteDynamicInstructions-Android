@@ -8,6 +8,8 @@
 #include "jvmti.h"
 #include "log_utils.h"
 
+extern jmethodID localVariableTest;
+
 class RdiAgent {
 
 public:

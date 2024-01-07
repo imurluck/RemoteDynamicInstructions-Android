@@ -8,6 +8,7 @@
 #include <jni.h>
 #include <android/log.h>
 
+#define LOG_D(tag, fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, tag, fmt, ##args)
 #define LOG_I(tag, fmt, args...) __android_log_print(ANDROID_LOG_INFO, tag, fmt, ##args)
 #define LOG_E(tag, fmt, args...) __android_log_print(ANDROID_LOG_ERROR, tag, fmt, ##args)
 

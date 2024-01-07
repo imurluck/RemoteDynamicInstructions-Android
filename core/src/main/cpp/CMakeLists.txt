@@ -12,7 +12,13 @@ include_directories(include)
 include_directories(third-part/enhance)
 set(ENHANCE_SOURCES third-part/enhance/EnhanceDlsym.cpp)
 
-add_library(rdi SHARED art_env.cpp rdi_jni.cpp rdi_agent.cpp jvmti_registry.cpp ${ENHANCE_SOURCES})
+add_library(rdi SHARED
+        art_env.cpp
+        rdi_jni.cpp
+        rdi_agent.cpp
+        jvmti_registry.cpp
+        jvmti_utils.cpp
+        ${ENHANCE_SOURCES})
 
 target_link_libraries(
         rdi

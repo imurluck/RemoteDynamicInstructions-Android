@@ -27,5 +27,20 @@ public class MainActivity extends AppCompatActivity {
             }
             Log.e(TAG, "initialize cost " + (SystemClock.uptimeMillis() - startTime));
         });
+
+        findViewById(R.id.local_variable_test_btn).setOnClickListener(v -> {
+            localVariableTest(true, 'c', (byte) 1, (short) 1, 1, 2f, 3d, 1L, new Object(), new Object[1]);
+        });
+    }
+
+    public void localVariableTest(boolean b, char c, byte bt, short s, int i, float f, double d, long l, Object o, Object[] array) {
+//        int innerI = 11;
+//        float innerF = 22f;
+//        double innerD = 33d;
+//        Object innerO = new MainActivity();
+//        {
+//            int shortLengthI = 111;
+//        }
+//        System.out.println();
     }
 }

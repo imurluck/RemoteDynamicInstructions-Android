@@ -3,6 +3,7 @@
 //
 
 #include "rdi_agent.h"
+#include "jvmti_utils.h"
 
 #define TAG "rdi_agent"
 
@@ -15,5 +16,9 @@ RdiAgent RdiAgent::Instance() {
 }
 
 void RdiAgent::OnMethodEnter(jvmtiEnv *jvmti_env, JNIEnv *jni_env, jthread thread, jmethodID method) {
-//    LOG_I(TAG, "onMethodEnter %p", method);
+    if (method != localVariableTest) {
+        return;
+    }
+    LOG_I(TAG, "localVariableTest method enter");
+    GetArguments(jvmti_env, jni_env, thread, method);
 }
