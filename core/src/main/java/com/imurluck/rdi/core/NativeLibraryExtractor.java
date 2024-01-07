@@ -22,8 +22,6 @@ import java.util.zip.ZipFile;
  */
 class NativeLibraryExtractor {
 
-   private static final String ROOT_DIR_NAME = "rdi";
-
    /**
     * extract native lib from source apk to a file
     *
@@ -48,6 +46,14 @@ class NativeLibraryExtractor {
       return targetFile;
    }
 
+   /**
+    * copy native library from apk file into target file
+    *
+    * @param targetAbi target so abi type
+    * @param apkFile input apk files
+    * @param libraryName native library name in apk file
+    * @throws IOException there is no requested library in apk file or exception during copying
+    */
    private void copyLibrary(
            @NonNull File targetFile,
            @NonNull String targetAbi,
@@ -81,25 +87,39 @@ class NativeLibraryExtractor {
       return new File(
               Configurations.getRootDir(application), abi + File.separator + libraryName);
    }
+
+   /**
+    * find the most matched abi type in the apk file, it must match application launch mode
+    *
+    * @param apkFile the input apk file
+    * @return matched abi type, maybe null if no matched ones
+    * @throws IOException no so files in the apk files
+    */
    @Nullable
    private String getTargetAbi(@NonNull ZipFile apkFile) throws IOException {
-      Set<String> sourceApkAbiSet = getSourceApkAbiSet(apkFile);
-      if (sourceApkAbiSet.isEmpty()) {
+      Set<String> sourceApkAbiTypes = getSourceApkAbiTypes(apkFile);
+      if (sourceApkAbiTypes.isEmpty()) {
          throw new IOException("There are no so files in source apk");
       }
 
       final String[] supportedABIs = Build.SUPPORTED_ABIS;
       String targetAbi = null;
       for (String abi : supportedABIs) {
-         if (sourceApkAbiSet.contains(abi)) {
+         if (sourceApkAbiTypes.contains(abi)) {
             targetAbi = abi;
          }
       }
       return targetAbi;
    }
 
+   /**
+    * gets the abi types of all so files in the apk
+    *
+    * @param apkFile the input apk file
+    * @return set of abi types
+    */
    @NonNull
-   private Set<String> getSourceApkAbiSet(@NonNull ZipFile apkFile) {
+   private Set<String> getSourceApkAbiTypes(@NonNull ZipFile apkFile) {
       final Enumeration<? extends ZipEntry> entries = apkFile.entries();
       final Set<String> abiSet = new HashSet<>();
       while (entries.hasMoreElements()) {
