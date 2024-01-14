@@ -1,0 +1,2 @@
+-keep class com.imurluck.rdi.api.ICapability
+-keep class ** extends com.imurluck.rdi.api.ICapability

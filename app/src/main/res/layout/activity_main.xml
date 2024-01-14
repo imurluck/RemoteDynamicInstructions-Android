@@ -9,10 +9,10 @@
     tools:context=".MainActivity">
 
    <Button
-       android:id="@+id/initialize_btn"
+       android:id="@+id/on_method_enter_btn"
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
-       android:text="initialize"
+       android:text="OnMethodEnter"
        android:textAllCaps="false"/>
 
    <Button

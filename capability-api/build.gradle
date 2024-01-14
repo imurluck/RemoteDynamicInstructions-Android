@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.imurluck.rdi.core'
+    namespace 'com.imurluck.rdi.api'
     compileSdk androidVersions.compileSdk
 
     defaultConfig {
@@ -11,23 +11,12 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
-        externalNativeBuild {
-            cmake {
-                cppFlags ""
-            }
-        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
         }
     }
     compileOptions {
@@ -39,5 +28,4 @@ android {
 dependencies {
 
     implementation librarys.'androidx-annotation'
-    implementation project(":capability-api")
 }
