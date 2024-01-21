@@ -9,29 +9,19 @@
 
 #define TAG "rdi_agent"
 
-/**
- * singleton
- */
-RdiAgent RdiAgent::Instance() {
-    static RdiAgent instance;
-    return instance;
-}
-
 void RdiAgent::OnMethodEnter(jvmtiEnv *jvmti_env, JNIEnv *jni_env, jthread thread, jmethodID method) {
-    char* name;
-    char* signature;
-    char* place_holder;
-    jvmti_env->GetMethodName(method, &name, &signature, &place_holder);
-    LOG_D(TAG, "onMethodEnter %s%s %lld", name, signature, method);
-    if (on_method_enter_capabilities_.find(method) == on_method_enter_capabilities_.end() ||
-        testMethodId == method) {
+    if (on_method_enter_capabilities_.find(method) == on_method_enter_capabilities_.end()) {
         return;
     }
-    GetArguments(jvmti_env, jni_env, thread, method);
-    JniOnMethodEnter(jni_env, method);
+    jobjectArray argument_values;
+    jvmtiError error_code = GetArguments(
+            jvmti_env, jni_env, thread, method, 0, &argument_values);
+    if (error_code != JVMTI_ERROR_NONE) {
+        return;
+    }
+    JniOnMethodEnter(jni_env, method, argument_values);
 }
 
-void RdiAgent::RegisterOnMethodEnterCapability(jmethodID methodId) {
-
-    on_method_enter_capabilities_.insert(methodId);
+void RdiAgent::RegisterOnMethodEnterCapability(jmethodID method_id) {
+    on_method_enter_capabilities_.insert(method_id);
 }

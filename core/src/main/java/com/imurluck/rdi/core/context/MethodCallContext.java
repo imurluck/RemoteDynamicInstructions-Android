@@ -10,9 +10,15 @@ import com.imurluck.rdi.api.IMethodCallContext;
  */
 public class MethodCallContext implements IMethodCallContext {
 
+   private final Object[] mArguments;
+
+   public MethodCallContext(@NonNull Object[] arguments) {
+      this.mArguments = arguments;
+   }
+
    @NonNull
    @Override
    public Object[] getArguments() {
-      return new Object[0];
+      return this.mArguments;
    }
 }

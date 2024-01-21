@@ -14,15 +14,28 @@ using namespace std;
 class RdiAgent {
 
 private:
+    RdiAgent() = default;
+
+    ~RdiAgent() = default;
+
     unordered_set<jmethodID> on_method_enter_capabilities_;
+
+    RdiAgent(const RdiAgent& other) = delete;
+    RdiAgent& operator=(const RdiAgent& other) = delete;
 
 public:
 
-    static RdiAgent Instance();
+    /**
+     * singleton
+     */
+    static RdiAgent& Instance() {
+        static RdiAgent instance;
+        return instance;
+    }
 
     void OnMethodEnter(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method);
 
-    void RegisterOnMethodEnterCapability(jmethodID methodId);
+    void RegisterOnMethodEnterCapability(jmethodID method_id);
 };
 
 #endif //RDI_RDI_AGENT_H

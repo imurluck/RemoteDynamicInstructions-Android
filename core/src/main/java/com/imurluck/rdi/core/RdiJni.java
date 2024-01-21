@@ -22,9 +22,9 @@ class RdiJni {
    /**package*/static native void onMethodEnterRegistered(long methodId);
 
    /**
-    * called from jni
+    * called from jni, if no arguments, will receive an empty array
     */
-   private static void onMethodEnter(long methodId) {
-      RdiAgentHolder.agent.onMethodEnter(methodId, null);
+   private static void onMethodEnter(long methodId, @NonNull Object[] arguments) {
+      RdiAgentHolder.agent.onMethodEnter(methodId, arguments);
    }
 }

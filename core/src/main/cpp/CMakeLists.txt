@@ -15,6 +15,7 @@ set(ENHANCE_SOURCES third-part/enhance/EnhanceDlsym.cpp)
 add_library(rdi SHARED
         art_env.cpp
         rdi_jni.cpp
+        rdi_base.cpp
         rdi_agent.cpp
         jvmti_registry.cpp
         jvmti_utils.cpp

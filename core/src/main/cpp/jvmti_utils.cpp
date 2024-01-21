@@ -4,6 +4,8 @@
 #include "jvmti_utils.h"
 #include "log_utils.h"
 #include "vector"
+#include "rdi_jni.h"
+#include "rdi_base.h"
 
 #define TAG "jvmti_utils"
 
@@ -57,98 +59,125 @@ Type signatureToType(const char* signature) {
     return arguments;
 }
 
-void* getLocalVariableValue(jvmtiEnv* jvmti_env, jthread thread, jvmtiLocalVariableEntry* entry) {
-    void* value_ptr = nullptr;
+jvmtiError getLocalVariableValue(jvmtiEnv *jvmti_env, JNIEnv *jni_env, jthread thread,
+                      jvmtiLocalVariableEntry *entry, int depth, jobjectArray out, jsize index) {
+
     jvmtiError error_code;
+    if (::strcmp("this", entry->name) == 0) {
+        jobject instance;
+        error_code = jvmti_env->GetLocalInstance(thread, depth, &instance);
+        if (error_code != JVMTI_ERROR_NONE) {
+            LOG_E(TAG, "Failed to GetLocalInstance, depth=%d, error_code=%d", depth, error_code);
+            return error_code;
+        }
+        jni_env->SetObjectArrayElement(out, index, instance);
+        return JVMTI_ERROR_NONE;
+    }
+
+    jobject argument_value = nullptr;
     switch (signatureToType(entry->signature)) {
-        case Z:
-        case C:
-        case B:
-        case S:
+        case Z: {
+            jint value;
+            error_code = jvmti_env->GetLocalInt(thread, 0, entry->slot, &value);
+            argument_value = BoxingBoolean(jni_env, value);
+            break;
+        }
+        case C: {
+            jint value;
+            error_code = jvmti_env->GetLocalInt(thread, 0, entry->slot, &value);
+            argument_value = BoxingChar(jni_env, value);
+            break;
+        }
+        case B: {
+            jint value;
+            error_code = jvmti_env->GetLocalInt(thread, 0, entry->slot, &value);
+            argument_value = BoxingByte(jni_env, (jbyte) value);
+            break;
+        }
+        case S: {
+            jint value;
+            error_code = jvmti_env->GetLocalInt(thread, 0, entry->slot, &value);
+            argument_value = BoxingShort(jni_env, (jshort) value);
+            break;
+        }
         case I: {
             jint value;
             error_code = jvmti_env->GetLocalInt(thread, 0, entry->slot, &value);
-            LOG_D(TAG, "%s=%d", entry->name, value);
-            value_ptr = &value;
+            argument_value = BoxingInt(jni_env, value);
             break;
         }
         case F: {
             jfloat value;
             error_code = jvmti_env->GetLocalFloat(thread, 0, entry->slot, &value);
-            LOG_D(TAG, "%s=%f", entry->name, value);
-            value_ptr = &value;
+            argument_value = BoxingFloat(jni_env, value);
             break;
         }
         case D: {
             jdouble value;
             error_code = jvmti_env->GetLocalDouble(thread, 0, entry->slot, &value);
-            LOG_D(TAG, "%s=%lld", entry->name, value);
-            value_ptr = &value;
+            argument_value = BoxingDouble(jni_env, value);
             break;
         }
         case J: {
             jlong value;
             error_code = jvmti_env->GetLocalLong(thread, 0, entry->slot, &value);
-            LOG_D(TAG, "%s=%lld", entry->name, value);
-            value_ptr = &value;
+            argument_value = BoxingLong(jni_env, value);
             break;
         }
 
         case Object: {
-            jobject value;
-            error_code = jvmti_env->GetLocalObject(thread, 0, entry->slot, &value);
-            LOG_D(TAG, "%s=%p", entry->name, &value);
-            value_ptr = &value;
+            error_code = jvmti_env->GetLocalObject(thread, 0, entry->slot, &argument_value);
             break;
         }
     }
 
     if (error_code != JVMTI_ERROR_NONE) {
-        LOG_E(TAG, "Failed to get local variable value, name=%s, error_code=%d", entry->name, error_code);
-        return nullptr;
+        LOG_E(TAG,
+              "Failed to get local variable value, name=%s, error_code=%d", entry->name, error_code);
+        return error_code;
     }
 
-    return value_ptr;
+    jni_env->SetObjectArrayElement(out, index, static_cast<jobject>(argument_value));
+    return JVMTI_ERROR_NONE;
 }
 
-jarray getArgumentValues(
-        jvmtiEnv* jvmti_env,
-        JNIEnv *jni_env,
-        jthread thread,
-        vector<jvmtiLocalVariableEntry*> argument_entries) {
+jvmtiError getArgumentValues(jvmtiEnv* jvmti_env, JNIEnv *jni_env, jthread thread,
+        vector<jvmtiLocalVariableEntry*> argument_entries, int depth, jobjectArray out) {
 
     for (size_t i = 0; i < argument_entries.size(); ++i) {
         jvmtiLocalVariableEntry* entry = argument_entries[i];
-        void* value = getLocalVariableValue(jvmti_env, thread, entry);
-
+        jvmtiError error_code = getLocalVariableValue(
+                jvmti_env, jni_env, thread, entry, depth, out, (jsize) i);
+        if (error_code != JVMTI_ERROR_NONE) {
+            return error_code;
+        }
     }
 
-    return nullptr;
+    return JVMTI_ERROR_NONE;
 }
 
-jarray GetArguments(jvmtiEnv* jvmti_env, JNIEnv *jni_env, jthread thread, jmethodID method) {
+jvmtiError GetArguments(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method,
+                        int depth, jobjectArray* out) {
+
     jint entry_count;
     jvmtiLocalVariableEntry* table_ptr;
-    jvmtiError error_code;
-    const char* error_msg;
-    vector<jvmtiLocalVariableEntry*> argumentEntries;
-    error_code = jvmti_env->GetLocalVariableTable(
+    jvmtiError error_code = jvmti_env->GetLocalVariableTable(
             method, &entry_count, &table_ptr);
     if (error_code != JVMTI_ERROR_NONE) {
-        error_msg = "Failed to GetLocalVariableTable";
-        goto error;
+        LOG_E(TAG, "Failed to GetLocalVariableTable, %d", error_code);
+        return error_code;
     }
 
-    argumentEntries = FindArgumentEntries(
+    vector<jvmtiLocalVariableEntry*> argument_entries = FindArgumentEntries(
             table_ptr, entry_count);
-    if (argumentEntries.empty()) {
-        return jni_env->NewObjectArray(0, nullptr, nullptr);
+    // no arguments, return a 0-length array
+    if (argument_entries.empty()) {
+        *out = jni_env->NewObjectArray(0, g_object_class, nullptr);
+        return JVMTI_ERROR_NONE;
     }
 
-    return getArgumentValues(jvmti_env, jni_env, thread, argumentEntries);
+    *out = jni_env->NewObjectArray(
+            (jsize) argument_entries.size(), g_object_class, nullptr);
 
-    error: {
-        LOG_E(TAG, "error_code=%d, %s", error_code, error_msg);
-        return nullptr;
-    }
+    return getArgumentValues(jvmti_env, jni_env, thread, argument_entries, depth, *out);
 }

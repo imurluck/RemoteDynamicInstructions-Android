@@ -8,6 +8,6 @@
 
 extern jmethodID testMethodId;
 
-void JniOnMethodEnter(JNIEnv* env, jmethodID pId);
+void JniOnMethodEnter(JNIEnv *env, jmethodID method, jobjectArray pArray);
 
 #endif //RDI_RDI_JNI_H

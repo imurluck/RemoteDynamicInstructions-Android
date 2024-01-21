@@ -70,8 +70,9 @@ class RdiAgent {
         mCapabilityRegistry.registerCapability(capability);
     }
 
-    public void onMethodEnter(long methodId, @NonNull MethodCallContext context) {
+    public void onMethodEnter(long methodId, @NonNull Object[] arguments) {
         synchronized (IOnMethodEnterCapability.class) {
+            MethodCallContext context = new MethodCallContext(arguments);
             List<IOnMethodEnterCapability> capabilities =
                     mCapabilityRegistry.getOnMethodEnterCapabilities(methodId);
             if (capabilities == null || capabilities.size() == 0) {

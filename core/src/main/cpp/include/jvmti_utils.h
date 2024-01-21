@@ -26,6 +26,7 @@ typedef enum {
 vector<jvmtiLocalVariableEntry*> FindArgumentEntries(
         jvmtiLocalVariableEntry* table_ptr, int total_entry_count);
 
-jarray GetArguments(jvmtiEnv* jvmti_env, JNIEnv *jni_env, jthread thread, jmethodID method);
+jvmtiError GetArguments(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method,
+                        int depth, jobjectArray* out);
 
 #endif //RDI_JVMTI_UTILS_H

@@ -7,14 +7,18 @@
 #include "log_utils.h"
 #include "rdi_agent.h"
 #include "rdi_jni.h"
+#include "rdi_base.h"
 
 jmethodID testMethodId = nullptr;
+
+#define OBJECT_CLASS_NAME "java/lang/Object"
+jclass g_object_class;
 
 #define TAG "rdi_jni"
 #define RDI_JNI_CLASS_NAME "com/imurluck/rdi/core/RdiJni"
 
-static jclass rdiJniClass = nullptr;
-static jmethodID onMethodEnterId = nullptr;
+static jclass rdi_jni_class = nullptr;
+static jmethodID on_method_enterId = nullptr;
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     ArtHelper::Initialize(vm);
@@ -33,16 +37,22 @@ Java_com_imurluck_rdi_core_RdiJni_initializeNative(JNIEnv *env, jclass clazz) {
         return env->NewStringUTF(error_msg);
     }
 
-    rdiJniClass = reinterpret_cast<jclass>(
+    rdi_jni_class = reinterpret_cast<jclass>(
             env->NewGlobalRef(env->FindClass(RDI_JNI_CLASS_NAME)));
-    onMethodEnterId = env->GetStaticMethodID(
-            rdiJniClass,
+    on_method_enterId = env->GetStaticMethodID(
+            rdi_jni_class,
             "onMethodEnter",
-            "(J)V");
+            "(J[Ljava/lang/Object;)V");
+
+    g_object_class = reinterpret_cast<jclass>(
+            env->NewGlobalRef(env->FindClass(OBJECT_CLASS_NAME)));
+
+    InitializePrimaryTypes(env);
 
     // initialize success
     return nullptr;
 }
+
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_imurluck_rdi_core_RdiJni_findMethod(
@@ -59,18 +69,16 @@ Java_com_imurluck_rdi_core_RdiJni_findMethod(
     if (methodId == nullptr) {
         return -1;
     }
-    testMethodId = methodId;
-    LOG_D(TAG, "findMethod %s%s %lld", name_chars, signature_chars, methodId);
     return reinterpret_cast<jlong>(methodId);
 }
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_imurluck_rdi_core_RdiJni_onMethodEnterRegistered(JNIEnv*, jclass , jlong method_id) {
-    LOG_D(TAG, "onMethodEnterRegistered %lld", method_id);
-    RdiAgent::Instance().RegisterOnMethodEnterCapability(reinterpret_cast<jmethodID>(method_id));
+    RdiAgent::Instance().RegisterOnMethodEnterCapability(
+            reinterpret_cast<jmethodID>(method_id));
 }
 
-void JniOnMethodEnter(JNIEnv* env, jmethodID methodId) {
+void JniOnMethodEnter(JNIEnv *env, jmethodID methodId, jobjectArray argument_values) {
     env->CallStaticVoidMethod(
-            rdiJniClass, onMethodEnterId, reinterpret_cast<jlong>(methodId));
+            rdi_jni_class, on_method_enterId, reinterpret_cast<jlong>(methodId), argument_values);
 }
